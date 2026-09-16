@@ -25,7 +25,9 @@ phase: no clock, no separate window, just "is this the next correct skill, yes o
   of DDR's `customSongs`/`defaultSongs` folders, so if you already have DDR installed you
   already have a library of rotations to use here (DDR's song format has the ordered
   skill sequence baked in; Skill Focus just ignores the timing and treats it as a
-  checklist instead of a rhythm track).
+  checklist instead of a rhythm track). DDR isn't required, though — Skill Focus also has
+  its own rotations folder, with a corner-menu shortcut to open it and an "Add Rotation
+  from Clipboard" option for pasting a song straight in.
 - **Auto-detects your keybinds** — reads your keybind export
   (`Documents\Guild Wars 2\InputBinds\*.xml`) and layers it over Guild Wars 2's stock
   defaults, so it knows what to actually wait for instead of assuming 1-5/6/7-9/0.
@@ -73,24 +75,35 @@ If you'd rather build it yourself (or want to modify it):
    This produces `bin/Release/net48/SkillFocus.bhm`.
 3. Follow steps 2-5 above using that file instead of the downloaded one.
 
-### Prerequisite: Dance Dance Rotation
+### Getting rotation files
 
-Skill Focus reads its rotation files from Dance Dance Rotation's song folders, so install
-[Dance Dance Rotation](https://blishhud.com/modules/?module=com.shooper.ddr) first (via
-Blish HUD's built-in module repo) if you don't already have it — even if you never open
-DDR itself, its default song pack gives Skill Focus something to load. You can also drop
-your own custom song `.json` files into DDR's `customSongs` folder and they'll show up
-in Skill Focus too. See DDR's own docs/its
-[Song Composer tool](https://campbt.github.io/DanceDanceRotationComposer/create.html) for
-how to generate a song from a dps.report log and build template.
+Skill Focus reads rotations from three folders, in this order of preference: its own
+folder, then Dance Dance Rotation's `customSongs`, then DDR's `defaultSongs`. You have a
+couple of options for getting rotations into it:
+
+- **Install [Dance Dance Rotation](https://blishhud.com/modules/?module=com.shooper.ddr)**
+  (via Blish HUD's built-in module repo) — even if you never open DDR itself, its
+  bundled default song pack gives Skill Focus a full library to load immediately, and any
+  custom songs you drop into DDR's `customSongs` folder show up in Skill Focus too.
+- **Or skip DDR entirely** and use Skill Focus's own folder: corner icon →
+  **Open Rotations Folder** opens
+  `Documents\Guild Wars 2\addons\blishhud\skillfocus-data\customSongs\` directly, or
+  corner icon → **Add Rotation from Clipboard** parses whatever song JSON you have copied
+  and saves it there for you (same idea as DDR's own "Add from Clipboard").
+
+Either way, rotation files are just JSON in the DDR song format (an ordered list of
+`{time, duration, noteType, abilityId}` notes — Skill Focus only cares about the order
+and `noteType`). The easiest way to generate one is DDR's own
+[Song Composer tool](https://campbt.github.io/DanceDanceRotationComposer/create.html),
+which builds a song from a dps.report log and a build template chat code.
 
 ## Usage
 
 ### 1. Pick a rotation
 
 Click the corner icon → **Choose Rotation...**. This opens a searchable list of every
-song found in DDR's `customSongs` and `defaultSongs` folders — type to filter, click one
-to load it.
+song found across Skill Focus's own folder and DDR's `customSongs`/`defaultSongs`
+folders — type to filter, click one to load it.
 
 ### 2. Calibrate your skill bar (one-time per build)
 

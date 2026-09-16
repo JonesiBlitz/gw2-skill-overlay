@@ -27,13 +27,18 @@ namespace SkillFocus
         /// </summary>
         public static RotationSong LoadFromFile(string path)
         {
-            var root = JObject.Parse(File.ReadAllText(path));
+            return LoadFromJson(File.ReadAllText(path), path, Path.GetFileNameWithoutExtension(path));
+        }
+
+        public static RotationSong LoadFromJson(string json, string sourcePath, string fallbackName)
+        {
+            var root = JObject.Parse(json);
 
             var song = new RotationSong
             {
-                Name = (string)root["name"] ?? Path.GetFileNameWithoutExtension(path),
+                Name = (string)root["name"] ?? fallbackName,
                 Description = (string)root["description"] ?? "",
-                SourcePath = path,
+                SourcePath = sourcePath,
             };
 
             var notes = root["notes"] as JArray;

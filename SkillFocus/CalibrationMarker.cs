@@ -45,10 +45,13 @@ namespace SkillFocus
         protected override void Paint(SpriteBatch spriteBatch, Rectangle bounds)
         {
             var pixel = ContentService.Textures.Pixel;
-            Color fill = _dragging ? Color.LimeGreen * 0.55f : Color.OrangeRed * 0.45f;
+            Color tint = _dragging ? Color.LimeGreen * 0.4f : Color.OrangeRed * 0.35f;
             Color border = _dragging ? Color.LimeGreen : Color.OrangeRed;
 
-            spriteBatch.DrawOnCtrl(this, pixel, bounds, fill);
+            // Solid dark backing first so the label stays readable over bright/busy
+            // parts of the game world - a colored tint alone was too see-through.
+            spriteBatch.DrawOnCtrl(this, pixel, bounds, Color.Black * 0.8f);
+            spriteBatch.DrawOnCtrl(this, pixel, bounds, tint);
 
             const int t = 2;
             spriteBatch.DrawOnCtrl(this, pixel, new Rectangle(0, 0, bounds.Width, t), border);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -188,9 +189,20 @@ namespace SkillFocus
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
             "Guild Wars 2", "addons", "blishhud", "danceDanceRotation", "defaultSongs");
 
+        /// <summary>
+        /// Skill Focus's own rotation folder, used regardless of whether Dance Dance
+        /// Rotation is installed - so players without DDR still have somewhere to drop
+        /// (or paste, via "Add Rotation from Clipboard") song files.
+        /// </summary>
+        private static string OwnSongsDir => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "Guild Wars 2", "addons", "blishhud", "skillfocus-data", "customSongs");
+
         private void LoadSongsAndPickDefault()
         {
-            _songFiles = RotationSong.DiscoverSongFiles(DdrCustomSongsDir, DdrDefaultSongsDir);
+            Directory.CreateDirectory(OwnSongsDir);
+
+            _songFiles = RotationSong.DiscoverSongFiles(OwnSongsDir, DdrCustomSongsDir, DdrDefaultSongsDir);
 
             string pick = _selectedSongPath.Value;
             if (string.IsNullOrEmpty(pick) || !File.Exists(pick))
@@ -207,9 +219,65 @@ namespace SkillFocus
             else
             {
                 ScreenNotification.ShowNotification(
-                    "Skill Focus: no rotation files found in Dance Dance Rotation's song folders.",
+                    "Skill Focus: no rotation files found. Use the corner icon to open your rotations folder or paste one from the clipboard.",
                     ScreenNotification.NotificationType.Warning);
             }
+        }
+
+        /// <summary>
+        /// Parses the clipboard as a Dance Dance Rotation-format song and saves it into
+        /// our own songs folder, mirroring DDR's own "Add from Clipboard" feature - lets
+        /// players without DDR installed still add rotations without hand-editing files.
+        /// </summary>
+        private void AddSongFromClipboard()
+        {
+            string json;
+            try
+            {
+                json = System.Windows.Forms.Clipboard.GetText();
+            }
+            catch (Exception e)
+            {
+                Logger.Info(e, "Failed to read clipboard.");
+                ScreenNotification.ShowNotification("Skill Focus: couldn't read the clipboard.", ScreenNotification.NotificationType.Error);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                ScreenNotification.ShowNotification("Skill Focus: clipboard is empty.", ScreenNotification.NotificationType.Warning);
+                return;
+            }
+
+            RotationSong parsed;
+            try
+            {
+                parsed = RotationSong.LoadFromJson(json, sourcePath: null, fallbackName: "Pasted Rotation");
+            }
+            catch (Exception e)
+            {
+                Logger.Info(e, "Failed to parse clipboard as a rotation song.");
+                ScreenNotification.ShowNotification("Skill Focus: clipboard doesn't look like a valid rotation song.", ScreenNotification.NotificationType.Error);
+                return;
+            }
+
+            if (parsed.Steps.Count == 0)
+            {
+                ScreenNotification.ShowNotification("Skill Focus: that rotation has no recognizable skill steps.", ScreenNotification.NotificationType.Warning);
+                return;
+            }
+
+            string safeName = string.Join("_", parsed.Name.Split(Path.GetInvalidFileNameChars()));
+            string destPath = Path.Combine(OwnSongsDir, $"{safeName}.json");
+
+            Directory.CreateDirectory(OwnSongsDir);
+            File.WriteAllText(destPath, json);
+
+            _songFiles = RotationSong.DiscoverSongFiles(OwnSongsDir, DdrCustomSongsDir, DdrDefaultSongsDir);
+            _songPicker?.UpdateFiles(_songFiles);
+
+            ScreenNotification.ShowNotification($"Skill Focus: added '{parsed.Name}'.", ScreenNotification.NotificationType.Info);
+            LoadSong(destPath);
         }
 
         private void LoadSong(string path)
@@ -466,6 +534,16 @@ namespace SkillFocus
 
             var rotationItem = _menu.AddMenuItem("Choose Rotation...");
             rotationItem.Click += (s, e) => _songPicker.Toggle();
+
+            var openFolderItem = _menu.AddMenuItem("Open Rotations Folder");
+            openFolderItem.Click += (s, e) =>
+            {
+                Directory.CreateDirectory(OwnSongsDir);
+                Process.Start(new ProcessStartInfo { FileName = OwnSongsDir, UseShellExecute = true });
+            };
+
+            var pasteItem = _menu.AddMenuItem("Add Rotation from Clipboard");
+            pasteItem.Click += (s, e) => AddSongFromClipboard();
 
             _layoutsMenuItem = _menu.AddMenuItem("Layouts");
             RebuildLayoutsSubmenu();

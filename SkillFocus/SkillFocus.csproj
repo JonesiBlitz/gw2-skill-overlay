@@ -14,4 +14,9 @@
     <PackageReference Include="System.ComponentModel.Composition" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Clipboard access for "Add Rotation from Clipboard" -->
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
 </Project>
