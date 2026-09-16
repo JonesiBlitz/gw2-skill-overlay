@@ -93,9 +93,40 @@ couple of options for getting rotations into it:
 
 Either way, rotation files are just JSON in the DDR song format (an ordered list of
 `{time, duration, noteType, abilityId}` notes — Skill Focus only cares about the order
-and `noteType`). The easiest way to generate one is DDR's own
+and `noteType`).
+
+### Making your own rotation
+
+The easiest way to generate a rotation file from scratch is DDR's own
 [Song Composer tool](https://campbt.github.io/DanceDanceRotationComposer/create.html),
-which builds a song from a dps.report log and a build template chat code.
+which builds one from a real combat log rather than hand-typing skill names:
+
+1. **Get a dps.report log of the rotation you want to learn.** The simplest source is a
+   benchmark log — either record your own on the golem in the
+   [Special Forces Training Area](https://blishhud.com/docs/user/faqs/) with
+   [arcdps](https://www.deltaconnected.com/arcdps/) running (arcdps can auto-upload to
+   dps.report if configured, or upload the resulting `.zevtc` file manually at
+   [dps.report](https://dps.report/)), or grab an existing benchmark log linked from a
+   build guide (e.g. [Snow Crows](https://snowcrows.com/) build pages link a "DPS Report"
+   for their benchmark). Either way you need the resulting `https://dps.report/...` link.
+2. **Get the matching build template chat code.** In-game, open your build/equipment
+   panel and use its "copy build template to clipboard" button, or copy the code straight
+   off a build guide page that lists one.
+3. **Fill in the Composer form**: a name, a short description, the dps.report link, and
+   the build template code, then hit Submit. It parses the log and generates the song
+   JSON automatically.
+4. **Copy the result** with the Composer's "Copy Song to Clipboard" button.
+5. **In-game**, corner icon → **Add Rotation from Clipboard**. It'll parse what's on your
+   clipboard, save it into Skill Focus's own rotations folder, and load it immediately.
+
+One gotcha we ran into ourselves: arcdps can't record anything that happens *before*
+combat officially starts, so a pre-cast opener (buffs/utilities used right before
+engaging) can end up missing from the generated song, silently starting mid-rotation
+instead. If that happens, you can hand-edit the JSON's `notes` array to prepend the
+missing steps — each note just needs a `noteType` (`Weapon1`-`Weapon5`, `Heal`,
+`Utility1`-`Utility3`, `Elite`, `Profession1`-`Profession5`, or `WeaponSwap`) and an
+`abilityId` (cosmetic only, not used for matching); `time`/`duration` can be anything
+since Skill Focus ignores them entirely.
 
 ## Usage
 
