@@ -77,12 +77,15 @@ namespace SkillFocus
             _onGlobalMouseRelease = (s, e) => { _dragging = false; };
             GameService.Input.Mouse.LeftMouseButtonReleased += _onGlobalMouseRelease;
 
-            // Panel's own background is mostly see-through, which made the list hard to
-            // read over bright/busy parts of the game world - add a solid dark backing.
+            // ShowBorder (set below) already draws Panel's own faint corner/edge accent
+            // textures plus a very light tint - that's the "game looking" panel texture
+            // other modules have. It's just too faint on its own for text legibility, so
+            // darken it further with a translucent (not fully solid) overlay on top,
+            // letting those accents still show through instead of blocking them outright.
             new BackdropImage
             {
                 Texture = ContentService.Textures.Pixel,
-                Tint = Color.Black * 0.85f,
+                Tint = Color.Black * 0.55f,
                 Size = new Point(WindowWidth, WindowHeight),
                 Location = Point.Zero,
                 Parent = _window,
