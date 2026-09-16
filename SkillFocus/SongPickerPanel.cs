@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Blish_HUD;
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 
@@ -14,6 +15,16 @@ namespace SkillFocus
     /// </summary>
     public class SongPickerPanel
     {
+        /// <summary>
+        /// A plain Image captures mouse input by default, which would sit in front of (or
+        /// compete for hit-testing with) the search box/list drawn on top of it. This
+        /// variant never captures input, so it's safe to use purely as a background fill.
+        /// </summary>
+        private class BackdropImage : Image
+        {
+            protected override CaptureType CapturesInput() => CaptureType.None;
+        }
+
         private readonly Panel _window;
         private readonly TextBox _search;
         private readonly FlowPanel _list;
@@ -41,6 +52,17 @@ namespace SkillFocus
                 Parent = parent,
                 Visible = false,
                 ZIndex = Screen.CONTEXTMENU_BASEINDEX + 1,
+            };
+
+            // Panel's own background is mostly see-through, which made the list hard to
+            // read over bright/busy parts of the game world - add a solid dark backing.
+            new BackdropImage
+            {
+                Texture = ContentService.Textures.Pixel,
+                Tint = Color.Black * 0.85f,
+                Size = new Point(windowWidth, windowHeight),
+                Location = Point.Zero,
+                Parent = _window,
             };
 
             _search = new TextBox
