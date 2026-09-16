@@ -122,6 +122,8 @@ namespace SkillFocus
                 _highlight.Size = new Point(_boxSize.Value, _boxSize.Value);
             }
 
+            _songPicker?.UpdateDrag();
+
             // Cheap poll: switch layouts automatically when the player's profession/spec changes
             // (e.g. swapping build templates, logging onto a different character).
             if (!_calibrating && GameService.Gw2Mumble.IsAvailable)

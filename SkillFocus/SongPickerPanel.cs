@@ -25,6 +25,11 @@ namespace SkillFocus
             protected override CaptureType CapturesInput() => CaptureType.None;
         }
 
+        private const int TitleBarHeight = 36;
+        private const int WindowWidth = 360;
+        private const int WindowHeight = 460;
+
+        private readonly Container _parent;
         private readonly Panel _window;
         private readonly TextBox _search;
         private readonly FlowPanel _list;
@@ -32,27 +37,45 @@ namespace SkillFocus
         private readonly Action<string> _onSelected;
         private string _selectedPath;
 
+        private bool _hasBeenPositioned;
+        private bool _dragging;
+        private Point _dragOffset;
+        private readonly EventHandler<Blish_HUD.Input.MouseEventArgs> _onGlobalMouseRelease;
+
         public SongPickerPanel(Container parent, List<string> songFiles, string selectedPath, Action<string> onSelected)
         {
+            _parent = parent;
             _allFiles = songFiles;
             _selectedPath = selectedPath;
             _onSelected = onSelected;
-
-            const int windowWidth = 360;
-            const int windowHeight = 460;
 
             _window = new Panel
             {
                 Title = "Choose Rotation",
                 ShowBorder = true,
-                Size = new Point(windowWidth, windowHeight),
-                Location = new Point(
-                    Math.Max(0, parent.Width / 2 - windowWidth / 2),
-                    Math.Max(0, parent.Height / 2 - windowHeight / 2)),
+                Size = new Point(WindowWidth, WindowHeight),
                 Parent = parent,
                 Visible = false,
                 ZIndex = Screen.CONTEXTMENU_BASEINDEX + 1,
             };
+
+            // Panel has no built-in dragging (that's a WindowBase2/StandardWindow feature).
+            // Only start a drag from a click in the title bar strip, so it doesn't fight
+            // with clicking the search box or list underneath it. The actual movement is
+            // driven from UpdateDrag() (called every frame from the module's Update loop)
+            // rather than the MouseMoved event, so a fast drag doesn't break when the
+            // cursor momentarily leaves the window's bounds.
+            _window.LeftMouseButtonPressed += (s, e) =>
+            {
+                if (_window.RelativeMousePosition.Y <= TitleBarHeight)
+                {
+                    _dragging = true;
+                    _dragOffset = GameService.Input.Mouse.Position - _window.Location;
+                }
+            };
+
+            _onGlobalMouseRelease = (s, e) => { _dragging = false; };
+            GameService.Input.Mouse.LeftMouseButtonReleased += _onGlobalMouseRelease;
 
             // Panel's own background is mostly see-through, which made the list hard to
             // read over bright/busy parts of the game world - add a solid dark backing.
@@ -60,7 +83,7 @@ namespace SkillFocus
             {
                 Texture = ContentService.Textures.Pixel,
                 Tint = Color.Black * 0.85f,
-                Size = new Point(windowWidth, windowHeight),
+                Size = new Point(WindowWidth, WindowHeight),
                 Location = Point.Zero,
                 Parent = _window,
             };
@@ -68,7 +91,7 @@ namespace SkillFocus
             _search = new TextBox
             {
                 PlaceholderText = "Search...",
-                Width = windowWidth - 40,
+                Width = WindowWidth - 40,
                 Location = new Point(10, 40),
                 Parent = _window,
             };
@@ -79,7 +102,7 @@ namespace SkillFocus
                 Text = "Close",
                 TextColor = Color.LightGray,
                 AutoSizeWidth = true,
-                Location = new Point(windowWidth - 60, 10),
+                Location = new Point(WindowWidth - 60, 10),
                 Parent = _window,
             };
             closeLabel.Click += (s, e) => Hide();
@@ -87,7 +110,7 @@ namespace SkillFocus
             var scrollPanel = new Panel
             {
                 Location = new Point(10, 74),
-                Size = new Point(windowWidth - 20, windowHeight - 90),
+                Size = new Point(WindowWidth - 20, WindowHeight - 90),
                 CanScroll = true,
                 Parent = _window,
             };
@@ -108,8 +131,29 @@ namespace SkillFocus
             _window.Visible = !_window.Visible;
             if (_window.Visible)
             {
+                // Centered on first open only, using the screen's *current* size rather
+                // than whatever it reported back at module load (which could still have
+                // been zero/placeholder, pinning the window at (0,0) forever). Once the
+                // player has dragged it, leave it wherever they put it.
+                if (!_hasBeenPositioned)
+                {
+                    _window.Location = new Point(
+                        Math.Max(0, _parent.Width / 2 - WindowWidth / 2),
+                        Math.Max(0, _parent.Height / 2 - WindowHeight / 2));
+                    _hasBeenPositioned = true;
+                }
+
                 _search.Text = "";
                 RefreshList();
+            }
+        }
+
+        /// <summary>Call every frame (e.g. from the module's Update) to drive dragging.</summary>
+        public void UpdateDrag()
+        {
+            if (_dragging)
+            {
+                _window.Location = GameService.Input.Mouse.Position - _dragOffset;
             }
         }
 
@@ -174,6 +218,7 @@ namespace SkillFocus
 
         public void Dispose()
         {
+            GameService.Input.Mouse.LeftMouseButtonReleased -= _onGlobalMouseRelease;
             _window.Dispose();
         }
     }
