@@ -42,8 +42,22 @@ phase: no clock, no separate window, just "is this the next correct skill, yes o
 
 ## Installation
 
-Skill Focus isn't published on the official Blish HUD module repo — build it from
-source and drop it into your `modules` folder:
+Skill Focus isn't published on the official Blish HUD module repo, but you don't need to
+build it yourself — grab the pre-built module from
+[the latest release](https://github.com/JonesiBlitz/gw2-skill-overlay/releases/latest):
+
+1. Download `SkillFocus.bhm` from the release's Assets.
+2. Close Blish HUD if it's running (it locks the module file while loaded).
+3. Copy the `.bhm` file into your Blish HUD modules folder:
+   ```
+   Documents\Guild Wars 2\addons\blishhud\modules\
+   ```
+4. Start Blish HUD. Skill Focus should appear as a new corner icon (a gold crosshair)
+   near the other module icons.
+
+### Building from source instead
+
+If you'd rather build it yourself (or want to modify it):
 
 1. Install the [.NET SDK](https://dotnet.microsoft.com/download) (net48 target, so the
    .NET Framework 4.8 targeting pack needs to be available — the regular .NET SDK
@@ -52,16 +66,10 @@ source and drop it into your `modules` folder:
    ```bash
    git clone https://github.com/JonesiBlitz/gw2-skill-overlay.git
    cd gw2-skill-overlay/SkillFocus
-   dotnet build
+   dotnet build -c Release
    ```
-   This produces `bin/Debug/net48/SkillFocus.bhm`.
-3. Close Blish HUD if it's running (it locks the module file while loaded).
-4. Copy the `.bhm` file into your Blish HUD modules folder:
-   ```
-   Documents\Guild Wars 2\addons\blishhud\modules\
-   ```
-5. Start Blish HUD. Skill Focus should appear as a new corner icon (a gold crosshair)
-   near the other module icons.
+   This produces `bin/Release/net48/SkillFocus.bhm`.
+3. Follow steps 2-4 above using that file instead of the downloaded one.
 
 ### Prerequisite: Dance Dance Rotation
 
