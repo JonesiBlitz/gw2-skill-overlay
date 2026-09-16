@@ -52,8 +52,10 @@ build it yourself — grab the pre-built module from
    ```
    Documents\Guild Wars 2\addons\blishhud\modules\
    ```
-4. Start Blish HUD. Skill Focus should appear as a new corner icon (a gold crosshair)
-   near the other module icons.
+4. Start Blish HUD. New modules install disabled by default, so open the Blish HUD
+   settings menu → **Manage Modules**, find **Skill Focus** in the list, and enable it.
+5. Skill Focus should now appear as a new corner icon (a gold crosshair) near the other
+   module icons.
 
 ### Building from source instead
 
@@ -69,7 +71,7 @@ If you'd rather build it yourself (or want to modify it):
    dotnet build -c Release
    ```
    This produces `bin/Release/net48/SkillFocus.bhm`.
-3. Follow steps 2-4 above using that file instead of the downloaded one.
+3. Follow steps 2-5 above using that file instead of the downloaded one.
 
 ### Prerequisite: Dance Dance Rotation
 
