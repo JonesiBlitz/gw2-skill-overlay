@@ -1,6 +1,6 @@
 {
   "name": "Skill Focus",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "namespace": "nathendrader.skillfocus",
   "package": "SkillFocus.dll",
   "manifest_version": 1,

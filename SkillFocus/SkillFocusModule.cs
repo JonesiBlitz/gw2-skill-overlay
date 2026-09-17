@@ -34,6 +34,7 @@ namespace SkillFocus
             .Where(s => s != Slot.Unknown).ToArray();
 
         // --- settings ---
+        private SettingEntry<bool> _overlayEnabled;
         private SettingEntry<int> _boxSize;
         private SettingEntry<string> _selectedSongPath;
         private SettingEntry<string> _layoutsJson;
@@ -63,12 +64,18 @@ namespace SkillFocus
 
         private CornerIcon _cornerIcon;
         private ContextMenuStrip _menu;
+        private ContextMenuStripItem _enabledMenuItem;
         private ContextMenuStripItem _calibrateMenuItem;
         private ContextMenuStripItem _layoutsMenuItem;
         private SongPickerPanel _songPicker;
 
         protected override void DefineSettings(SettingCollection settings)
         {
+            _overlayEnabled = settings.DefineSetting(
+                "OverlayEnabled", true,
+                () => "Overlay Enabled",
+                () => "Show the skill highlight overlay. Turn off to pause tracking without disabling the whole module (also toggleable from the corner icon menu).");
+
             _boxSize = settings.DefineSetting(
                 "BoxSize", 46,
                 () => "Highlight Box Size",
@@ -100,6 +107,7 @@ namespace SkillFocus
             };
 
             GameService.Input.Keyboard.KeyPressed += Keyboard_KeyPressed;
+            _overlayEnabled.SettingChanged += OverlayEnabled_SettingChanged;
 
             BuildCornerIcon();
 
@@ -143,6 +151,7 @@ namespace SkillFocus
         protected override void Unload()
         {
             GameService.Input.Keyboard.KeyPressed -= Keyboard_KeyPressed;
+            _overlayEnabled.SettingChanged -= OverlayEnabled_SettingChanged;
 
             foreach (var marker in _markers) marker.Dispose();
             _markers.Clear();
@@ -308,7 +317,7 @@ namespace SkillFocus
 
         private void Keyboard_KeyPressed(object sender, KeyboardEventArgs e)
         {
-            if (_calibrating) return;
+            if (_calibrating || !_overlayEnabled.Value) return;
             if (_song == null || _song.Steps.Count == 0) return;
 
             var expected = _song.Steps[_currentIndex];
@@ -344,7 +353,7 @@ namespace SkillFocus
         {
             if (_highlight == null) return;
 
-            if (_calibrating || _song == null || _song.Steps.Count == 0 || _activeLayoutKey == null
+            if (!_overlayEnabled.Value || _calibrating || _song == null || _song.Steps.Count == 0 || _activeLayoutKey == null
                 || !_layouts.TryGetValue(_activeLayoutKey, out var layout))
             {
                 _highlight.Visible = false;
@@ -526,6 +535,9 @@ namespace SkillFocus
 
             _menu = new ContextMenuStrip();
 
+            _enabledMenuItem = _menu.AddMenuItem(_overlayEnabled.Value ? "Disable Overlay" : "Enable Overlay");
+            _enabledMenuItem.Click += (s, e) => { _overlayEnabled.Value = !_overlayEnabled.Value; };
+
             _calibrateMenuItem = _menu.AddMenuItem(_calibrating ? "Finish Calibration (Save Positions)" : "Calibrate Skill Bar");
             _calibrateMenuItem.Click += (s, e) => ToggleCalibration();
 
@@ -555,6 +567,21 @@ namespace SkillFocus
 
             _cornerIcon.Menu = _menu;
             _cornerIcon.Click += (s, e) => { _menu.Show(_cornerIcon); };
+        }
+
+        /// <summary>
+        /// Keeps the corner menu label in sync no matter how the setting changed - from
+        /// the menu click itself, or from the checkbox in Blish HUD's own module settings
+        /// panel (DefineSetting'd bools show up there automatically).
+        /// </summary>
+        private void OverlayEnabled_SettingChanged(object sender, ValueChangedEventArgs<bool> e)
+        {
+            if (_enabledMenuItem != null)
+            {
+                _enabledMenuItem.Text = e.NewValue ? "Disable Overlay" : "Enable Overlay";
+            }
+
+            UpdateHighlightPosition();
         }
 
         private void RebuildLayoutsSubmenu()
